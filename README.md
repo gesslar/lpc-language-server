@@ -94,7 +94,7 @@ Diagnostics can be disabled for an entire file by addding a `@lpc-nocheck` comme
 ```
 
 ### Expect an error - `@lpc-expect-error`
-Indiciates that the next line is expected to return an error. If it does not, the directive will be flagged as an error
+Indicates that the next line is expected to return an error. If it does not, the directive will be flagged as an error
 
 ```c
 // @lpc-expect-error: method does not exist

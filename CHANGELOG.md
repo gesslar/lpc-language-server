@@ -7,6 +7,15 @@
 - Update to TypeScript 7, switch ts-jest to @swc/jest
 - Fix: `throw()` now ends control flow, so a function whose body only throws no longer reports a missing return
 - Fix: FluffOS mapping dot-access and optional-chaining keys (`m.key`, `m?.a?.b`) were left unhighlighted
+- Fix: an unparseable token in an included header could hang the parse and leave every file in the project without diagnostics - #374
+- Fix: a header's parse errors are now reported on the `#include` line that pulled it in, and can be navigated to - #374
+- Fix: a header that itself contains an `#include` reported a spurious "Declaration or statement expected" in every file that included it - #374
+- Fix: a partially-resolved type could throw while checking and take a whole file's diagnostics with it, leaving a file that will not compile looking clean - #377
+- Fix: nodes inside a mapping literal hovered as `mixed` instead of their own type - #376
+- Fix: an array declared with an element type was widened when a `mixed` value was assigned to it, discarding its own declaration for every later reference - #371
+- Fix: a `${...}` template interpolation inside an inactive `#if` region ran the scanner off the end of the file - #372
+- Fix: a function's `@returns` is now taken from whichever declaration carries it, so a prototype documented in a header no longer loses its return type - #378
+- New: FluffOS - report a local that shadows an enclosing local in the same function, which the driver refuses to compile - #375
 
 ## 1.1.54
 

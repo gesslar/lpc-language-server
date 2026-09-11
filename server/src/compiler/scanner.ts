@@ -160,8 +160,9 @@ export const textToDirectiveObj: MapLike<DirectiveSyntaxKind> = {
 const textToDirective = new Map(Object.entries(textToDirectiveObj));
 
 /** @internal */
-export const textToKeywordObj: MapLike<KeywordSyntaxKind> = {    
-    any: SyntaxKind.AnyKeyword,        
+export const textToKeywordObj: MapLike<KeywordSyntaxKind> = {
+    acatch: SyntaxKind.ACatchKeyword,
+    any: SyntaxKind.AnyKeyword,
     break: SyntaxKind.BreakKeyword,
     buffer: SyntaxKind.BufferKeyword,
     bytes: SyntaxKind.BytesKeyword,
@@ -195,6 +196,7 @@ export const textToKeywordObj: MapLike<KeywordSyntaxKind> = {
     nosave: SyntaxKind.NoSaveKeyword,
     object: SyntaxKind.ObjectKeyword,    
     private: SyntaxKind.PrivateKeyword,
+    promise: SyntaxKind.PromiseKeyword,
     protected: SyntaxKind.ProtectedKeyword,
     public: SyntaxKind.PublicKeyword,    
     ref: SyntaxKind.RefKeyword,
@@ -214,6 +216,7 @@ export const textToKeywordObj: MapLike<KeywordSyntaxKind> = {
     void: SyntaxKind.VoidKeyword,    
     while: SyntaxKind.WhileKeyword,
     async: SyntaxKind.AsyncKeyword,
+    await: SyntaxKind.AwaitKeyword,
 };
 
 const textToKeyword = new Map(Object.entries(textToKeywordObj));
@@ -1969,14 +1972,32 @@ export function createScanner(
     // FluffOS (LDMud uses `struct` for structures, `clone_object()` to construct, and `&`
     // for by-reference); `bytes`, `closure`, `lwobject`, `status` and `symbol` are types,
     // and `deprecated` and `virtual` are modifiers, only in LDMud; `time_expression`
-    // is a reserved word only in FluffOS. In the other driver each is an ordinary
-    // identifier (e.g. a variable or function name), so demote it to an Identifier token
-    // here rather than gating it per grammar position downstream.
+    // is a reserved word only in FluffOS. Each is an ordinary identifier in the other
+    // driver, so demote it to an Identifier token here rather than gating it per grammar
+    // position downstream.
+    //
+    // The coroutine keywords (fluffos#1319) need a word of their own, because `async` and
+    // `await` are NOT FluffOS-only: LDMud reserves both in lex.c's reswords[], with real
+    // productions in prolang.y. They are gated here anyway, and deliberately, because the
+    // two drivers share the spelling and nothing else. FluffOS builds on promises and
+    // spells the wait as a unary prefix operator, `await p`. LDMud builds on `coroutine`
+    // VALUES and spells it as a call, `await(cr, opt)` -- whose first argument must be an
+    // lpctype_coroutine -- alongside `yield(...)` in three arities and a `coroutine` type
+    // this scanner does not tokenize at all. Letting `await` through in LDMud would parse
+    // `await(cr, x)` as a unary await of a comma expression and then type-check a
+    // coroutine as a promise, which is worse than leaving the word alone. So they stay
+    // identifiers in LDMud until LDMud's own coroutine grammar is implemented -- a gap in
+    // this scanner, not a claim about the driver. `acatch` and the `promise` type really
+    // are FluffOS-only; LDMud has neither.
     function isKeywordInVariant(keyword: SyntaxKind, variant: LanguageVariant): boolean {
         switch (keyword) {
+            case SyntaxKind.ACatchKeyword:
+            case SyntaxKind.AsyncKeyword:
+            case SyntaxKind.AwaitKeyword:
             case SyntaxKind.BufferKeyword:
             case SyntaxKind.ClassKeyword:
             case SyntaxKind.NewKeyword:
+            case SyntaxKind.PromiseKeyword:
             case SyntaxKind.RefKeyword:
             case SyntaxKind.TimeExpressionKeyword:
                 return variant === LanguageVariant.FluffOS;

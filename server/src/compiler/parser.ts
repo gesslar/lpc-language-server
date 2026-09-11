@@ -2992,6 +2992,17 @@ export namespace LpcParser {
         return doInsideOfContext(NodeFlags.DisallowPipeContext, func);
     }
 
+    /**
+     * Parse `func` where a trailing `*` is the LPC array marker rather than a multiply
+     * operator. Used for the path of a named object type (`object "/std/room"*`): the
+     * path is parsed as an expression, and without this the expression parser swallows
+     * the array marker as the start of a multiplication, which both loses the array and
+     * reports a bogus "Expression expected" at the closing brace.
+     */
+    function disallowAsterisk<T>(func: () => T): T {
+        return doInsideOfContext(NodeFlags.DisallowAsteriskContext, func);
+    }
+
     function disallowTypes<T>(func: () => T): T {
         return doInsideOfContext(NodeFlags.DisallowTypes, func);
     }
@@ -3016,6 +3027,10 @@ export namespace LpcParser {
 
     function inDisallowBarContext() {
         return inContext(NodeFlags.DisallowPipeContext);
+    }
+
+    function inDisallowAsteriskContext() {
+        return inContext(NodeFlags.DisallowAsteriskContext);
     }
     
     function canParseSemicolon() {
@@ -3536,7 +3551,7 @@ export namespace LpcParser {
                 const pos = getPositionState();
                 const objectType = parseKeywordAndNoDot();
                 if (token() === SyntaxKind.StringLiteral) {
-                    let objectName = disallowPipe(parseExpression);
+                    let objectName = disallowPipe(() => disallowAsterisk(parseExpression));
                     Debug.assert(isStringLiteral(objectName) || isParenthesizedExpression(objectName) || isBinaryExpression(objectName));
                     return addImportCandidate(finishNode(factory.createNamedObjectTypeNode(objectName, objectType), pos));
                 }
@@ -4807,6 +4822,9 @@ export namespace LpcParser {
                 break;
             }
             if ((token() === SyntaxKind.BarToken || token() === SyntaxKind.AmpersandToken) && inDisallowBarContext()) {
+                break;
+            }
+            if ((token() === SyntaxKind.AsteriskToken || token() === SyntaxKind.AsteriskAsteriskToken) && inDisallowAsteriskContext()) {
                 break;
             }
             

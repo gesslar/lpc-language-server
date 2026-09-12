@@ -3094,7 +3094,10 @@ function getCategoryFormat(category: DiagnosticCategory): ForegroundColorEscapeS
         case DiagnosticCategory.Warning:
             return ForegroundColorEscapeSequences.Yellow;
         case DiagnosticCategory.Suggestion:
-            return Debug.fail("Should never get an Info diagnostic on the command line.");
+            // Reachable since a project check started collecting suggestion diagnostics. Only
+            // the colour formatter comes through here, and only when stdout is a TTY -- which
+            // is why piped output was fine and running the task in a terminal was not.
+            return ForegroundColorEscapeSequences.Blue;
         case DiagnosticCategory.Message:
             return ForegroundColorEscapeSequences.Blue;
     }

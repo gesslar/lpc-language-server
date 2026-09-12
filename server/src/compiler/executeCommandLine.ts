@@ -127,6 +127,13 @@ export function executeCommandLine(
                         // whole-project check could never report what the editor shows as
                         // an info.
                         diags.push(...program.getSuggestionDiagnostics(sourceFile));
+                        // Unreachable code is produced by the binder, into a collection of its
+                        // own that getSuggestionDiagnostics does not cover -- the editor picks
+                        // it up separately in computeSuggestionDiagnostics. Without this a
+                        // project check still misses the one suggestion it does not own.
+                        if (sourceFile.bindSuggestionDiagnostics) {
+                            diags.push(...sourceFile.bindSuggestionDiagnostics);
+                        }
                     }
                 } catch (e) {
                     system.write(`Error processing file: ${f}\n`);
